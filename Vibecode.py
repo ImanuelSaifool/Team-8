@@ -138,21 +138,6 @@ clean_df['COVERAGE_RATIO_PCT'] = clean_df['COVERAGE_RATIO'] * 100
 # ----------------------------------------------------------------------------------------------------------------------------------------------
 clean_df['CATASTROPHIC_COST'] = (clean_df['TOTSLF'] > (0.10 * clean_df['FAMINC'])).astype(int)
 # ----------------------------------------------------------------------------------------------------------------------------------------------
-cancer_map = {
-    "CABLADDR": "Bladder Cancer",
-    "CABREAST": "Breast Cancer",
-    "CACERVIX": "Cervix Cancer",
-    "CACOLON": "Colon Cancer",
-    "CALUNG": "Lung Cancer",
-    "CALYMPH": "Lymph Cancer",
-    "CAMELANO": "Melano Cancer",
-    "CAOTHER": "Other Cancer",
-    "CAPROSTA": "Prostate Cancer",
-    "CASKINNM": "Skin Cancer 1",
-    "CASKINDK": "SKin Cancer 2",
-    "CAUTERUS": "Uterus Cancer"
-}
-
 disease_map = {
     "HIBPDX": "High Blood Pressure",
     "ARTHDX": "Arthritis",
@@ -168,120 +153,150 @@ disease_map = {
     "CHBRON31": "Chronic Bronchitis"
 }
 # ----------------------------------------------------------------------------------------------------------------------------------------------
-# 15. PREDICTIVE MODELING (Random Forest Classifier)
-#        Predicting Toxicity Tier based on economic and demographic factors
+# 15. PRESCRIPTIVE MODELING (Random Forest Regressor)
+#        Predicting the Optimal Medicaid Subsidy (Comprehensive Day 1 Baseline)
 # ----------------------------------------------------------------------------------------------------------------------------------------------
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error
 
 print("\n" + "="*80)
-print("INITIALIZING PREDICTIVE MODEL: RANDOM FOREST")
+print("INITIALIZING PROACTIVE SUBSIDY CALCULATOR (CLINICAL & ECONOMIC)")
 print("="*80)
 
-# 1. Define Features (X) and Target (y)
-# Selecting the core economic, demographic, and constructed variables
-ml_features = ['FAMINC', 'PUBLIC_TOTAL', 'TOTSLF', 'AGELAST', 'COVERAGE_RATIO_PCT', 'CATASTROPHIC_COST', 'PYUNBL42', 'PROBPY42']
+# 1. Filter for Success (Only learn from the Fully Adherent patients)
+success_df = clean_df[clean_df['TOXICITY_TIER'] == "None (Fully Adherent)"].copy()
 
-# Create a clean dataframe for ML to ensure no NaN values break the model
-ml_df = clean_df.dropna(subset=ml_features + ['TOXICITY_TIER']).copy()
+# 2. Define Comprehensive "Day 1" Features
+# We bring back Sex, Cancer Type, and Comorbidities since these are known on Day 1
+ml_features = ['FAMINC', 'TOTSLF', 'AGELAST', 'CATASTROPHIC_COST', 'SEX'] + cancer_features + other_disease_features
+
+# Drop rows with NaNs in our specific feature set
+ml_df = success_df.dropna(subset=ml_features + ['PUBLIC_TOTAL']).copy()
 
 X = ml_df[ml_features]
-y = ml_df['TOXICITY_TIER']
+y = ml_df['PUBLIC_TOTAL']
 
-# 2. Train/Test Split
-# We split the data: 80% to train the model, 20% to test its accuracy.
-# stratify=y ensures the 80/20 split maintains the same ratio of Severe/Moderate/None cases.
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+# 3. Train/Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# 3. Initialize and Train the Random Forest Model
-# Using 'balanced' class_weight because 'None (Fully Adherent)' is likely much more common in the dataset.
-# This forces the model to pay extra attention to the rarer 'Severe' and 'Moderate' cases.
-rf_model = RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42)
+# 4. Train the Regressor
+rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
 rf_model.fit(X_train, y_train)
 
-# 4. Make Predictions on the unseen Test data
+# 5. Evaluate the Model
 y_pred = rf_model.predict(X_test)
-
-# 5. Evaluate the Model (Text Output)
-print("\n--- Random Forest Classification Report ---")
-print(classification_report(y_test, y_pred, zero_division=0))
-# 6. Visualize the Confusion Matrix
-# This shows us exactly where the model gets confused (e.g., predicting 'None' when it was actually 'Severe')
-plt.figure(figsize=(8, 6))
-cm = confusion_matrix(y_test, y_pred, labels=rf_model.classes_)
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-            xticklabels=rf_model.classes_, 
-            yticklabels=rf_model.classes_)
-
-plt.title("Confusion Matrix: Random Forest Predictions", fontsize=14, fontweight='bold')
-plt.ylabel('Actual Toxicity Tier')
-plt.xlabel('Predicted Toxicity Tier')
-plt.xticks(rotation=45, ha='right')
-plt.tight_layout()
-plt.show()
-
-# 7. Visualize Feature Importances
-# This answers the "Why?": Which variable carried the most weight in deciding the prediction?
-importances = rf_model.feature_importances_
-feature_names = X.columns
-importance_df = pd.DataFrame({'Feature': feature_names, 'Importance': importances}).sort_values(by='Importance', ascending=False)
-
-plt.figure(figsize=(10, 6))
-sns.barplot(data=importance_df, x='Importance', y='Feature', palette='viridis')
-
-plt.title("Feature Importance: What Drives Financial Toxicity?", fontsize=14, fontweight='bold')
-plt.xlabel("Relative Importance Score")
-plt.ylabel("Predictive Feature")
-plt.tight_layout()
-plt.show()
+mae = mean_absolute_error(y_test, y_pred)
+print(f"--- Model Ready ---")
+print(f"Average variation from historical successful MEPS subsidies: ${mae:,.2f}")
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------
-# 16. ONE-TO-ONE PREDICTION
-#        Testing the model on a hypothetical, single patient
+# 16. INTERACTIVE CLINICAL DECISION SUPPORT TOOL
+#        Terminal Input with Clinical/Demographic Menus
 # ----------------------------------------------------------------------------------------------------------------------------------------------
 
-print("\n" + "="*80)
-print("ONE-TO-ONE PATIENT PREDICTION")
-print("="*80)
+def run_subsidy_calculator():
+    print("\n" + "="*80)
+    print(" CLINICAL DECISION SUPPORT: DAY-1 SUBSIDY CALCULATOR")
+    print("="*80)
+    print("Type 'quit' at any prompt to exit the tool.\n")
 
-# Step 1: Define the raw data for your single patient
-# Let's imagine a 45-year-old making $30k, receiving $15k in public aid, but paying $4k out-of-pocket
-patient_faminc = 30000
-patient_public_total = 15000
-patient_totslf = 4000
-patient_age = 45
+    # Helper lists for the menus
+    cancer_list = ["Bladder", "Breast", "Cervix", "Colon", "Lung", "Lymphoma", "Melanoma", "Other", "Prostate", "Skin (Non-Melanoma)", "Skin (Unknown)", "Uterus"]
+    disease_list = ["Diabetes", "High Blood Pressure", "Coronary Heart Disease", "Angina", "Heart Attack", "Other Heart Disease", "Stroke", "High Cholesterol", "Emphysema", "Asthma", "Chronic Bronchitis", "Arthritis"]
 
-# Step 2: Calculate your engineered features using the same logic from earlier
-total_known_cost = patient_public_total + patient_totslf
-coverage_ratio_pct = (patient_public_total / (total_known_cost + 1e-9)) * 100
-catastrophic_cost = 1 if patient_totslf > (0.10 * patient_faminc) else 0
+    while True:
+        try:
+            # --- ECONOMIC DEMOGRAPHICS ---
+            faminc_in = input("Enter Patient's Current Family Income ($): ").strip().replace(',', '').replace('$', '')
+            if faminc_in.lower() == 'quit': break
+            patient_faminc = float(faminc_in)
 
-# Step 3: Package this into a DataFrame with the EXACT same columns used for training
-new_patient_df = pd.DataFrame({
-    'FAMINC': [patient_faminc],
-    'PUBLIC_TOTAL': [patient_public_total],
-    'TOTSLF': [patient_totslf],
-    'AGELAST': [patient_age],
-    'COVERAGE_RATIO_PCT': [coverage_ratio_pct],
-    'CATASTROPHIC_COST': [catastrophic_cost],
-    # 1 = Yes, 2 = No
-    'PROBPY42': [2],  # e.g., No problems paying bills
-    'PYUNBL42': [2],  # e.g., No unpaid bills
-    'CRFMPY42': [1]   # e.g., Yes, currently paying off medical debt over time
-})
+            totslf_in = input("Enter Projected Out-of-Pocket Cost for Treatment Plan ($): ").strip().replace(',', '').replace('$', '')
+            if totslf_in.lower() == 'quit': break
+            patient_totslf = float(totslf_in)
 
-# Step 4: Make the definitive prediction
-tier_prediction = rf_model.predict(new_patient_df)[0]
-print(f"Patient Profile:")
-print(f" - Income: ${patient_faminc:,} | OOP Cost: ${patient_totslf:,} | Public Aid: ${patient_public_total:,}")
-print(f"\n>> PREDICTED OUTCOME: {tier_prediction}")
+            age_in = input("Enter Patient Age: ").strip()
+            if age_in.lower() == 'quit': break
+            patient_age = int(age_in)
 
-# Step 5: (Pro-Tip) Get the exact probabilities!
-# This tells you how confident the model is, rather than just giving a hard answer.
-prediction_probs = rf_model.predict_proba(new_patient_df)[0]
-classes = rf_model.classes_
+            sex_in = input("Enter Assigned Sex (1 = Male, 2 = Female): ").strip()
+            if sex_in.lower() == 'quit': break
+            patient_sex = int(sex_in)
 
-print("\n>> RISK BREAKDOWN (Model Confidence):")
-for tier_name, prob in zip(classes, prediction_probs):
-    print(f" - {tier_name}: {prob*100:.1f}%")
+            # --- CLINICAL DEMOGRAPHICS ---
+            print("\n--- PRIMARY CANCER DIAGNOSIS ---")
+            for i, c in enumerate(cancer_list):
+                print(f"{i+1}. {c}")
+            cancer_choice = input("Select Primary Cancer Type (1-12): ").strip()
+            if cancer_choice.lower() == 'quit': break
+            
+            # Create a dictionary setting all cancers to 2 (No), then set the chosen one to 1 (Yes)
+            patient_cancers = {col: 2 for col in cancer_features}
+            if 1 <= int(cancer_choice) <= 12:
+                selected_cancer_col = cancer_features[int(cancer_choice) - 1]
+                patient_cancers[selected_cancer_col] = 1
+
+            print("\n--- COMORBIDITIES ---")
+            for i, d in enumerate(disease_list):
+                print(f"{i+1}. {d}")
+            disease_choice = input("Enter Comorbidities by number (comma separated, e.g., '1, 2, 8') or '0' for None: ").strip()
+            if disease_choice.lower() == 'quit': break
+            
+            # Create a dictionary setting all diseases to 2 (No), then set the chosen ones to 1 (Yes)
+            patient_diseases = {col: 2 for col in other_disease_features}
+            if disease_choice != '0':
+                choices = [int(x.strip()) for x in disease_choice.split(',') if x.strip().isdigit()]
+                for choice in choices:
+                    if 1 <= choice <= 12:
+                        selected_disease_col = other_disease_features[choice - 1]
+                        patient_diseases[selected_disease_col] = 1
+
+            # Auto-calculate catastrophic cost risk
+            catastrophic_cost = 1 if patient_totslf > (0.10 * patient_faminc) else 0
+
+            # --- PACKAGE DATA FOR MODEL ---
+            patient_data = {
+                'FAMINC': [patient_faminc],
+                'TOTSLF': [patient_totslf],
+                'AGELAST': [patient_age],
+                'CATASTROPHIC_COST': [catastrophic_cost],
+                'SEX': [patient_sex]
+            }
+            # Merge the clinical dictionaries into the main patient data dictionary
+            patient_data.update({k: [v] for k, v in patient_cancers.items()})
+            patient_data.update({k: [v] for k, v in patient_diseases.items()})
+
+            # Create DataFrame ensuring columns match exactly the training features order
+            new_patient_df = pd.DataFrame(patient_data)[ml_features]
+
+            # Predict
+            recommended_subsidy = rf_model.predict(new_patient_df)[0]
+
+            # Output Recommendation
+            cancer_name = cancer_list[int(cancer_choice) - 1] if 1 <= int(cancer_choice) <= 12 else "Unknown"
+            
+            print("\n" + "-" * 70)
+            print(" BASELINE PATIENT PROFILE:")
+            print(f" Demographics: Age {patient_age} | Sex: {'Male' if patient_sex == 1 else 'Female'}")
+            print(f" Clinical: {cancer_name} Cancer | Comorbidities Logged: {'None' if disease_choice == '0' else disease_choice}")
+            print(f" Financial: Income ${patient_faminc:,.2f} | Expected OOP: ${patient_totslf:,.2f}")
+            print(f" Catastrophic Cost Risk (>10% income): {'YES' if catastrophic_cost == 1 else 'NO'}")
+            print("-" * 70)
+            print(f">>> RECOMMENDED PROACTIVE SUBSIDY: ${recommended_subsidy:,.2f} <<<")
+            print("    (Amount required to statistically ensure treatment adherence)")
+            print("-" * 70 + "\n")
+            
+            run_again = input("Calculate for another patient? (y/n): ").strip().lower()
+            if run_again != 'y':
+                break
+            print("\n" + "="*80 + "\n")
+
+        except ValueError:
+            print("\n[ERROR] Invalid input. Please enter numbers appropriately.\n")
+            print("="*80 + "\n")
+
+    print("\nExiting Clinical Decision Support Tool. Goodbye!")
+
+# Launch the interactive tool
+run_subsidy_calculator()
