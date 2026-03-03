@@ -59,6 +59,54 @@ df2021p2 = df2021p2.rename(columns={"TOTMCD21": "TOTMCD"})
 df2022 = df2022.rename(columns={"TOTMCD22": "TOTMCD"})
 df2023 = df2023.rename(columns={"TOTMCD23": "TOTMCD"})
 
+# Renaming Medicaid
+df2019 = df2019.rename(columns={"TOTMCD19": "TOTMCD"})
+df2020 = df2020.rename(columns={"TOTMCD20": "TOTMCD"})
+df2021p1 = df2021p1.rename(columns={"TOTMCD21": "TOTMCD"})
+df2021p2 = df2021p2.rename(columns={"TOTMCD21": "TOTMCD"})
+df2022 = df2022.rename(columns={"TOTMCD22": "TOTMCD"})
+df2023 = df2023.rename(columns={"TOTMCD23": "TOTMCD"})
+
+# Renaming Medicare
+df2019 = df2019.rename(columns={"TOTMCR19": "TOTMCR"})
+df2020 = df2020.rename(columns={"TOTMCR20": "TOTMCR"})
+df2021p1 = df2021p1.rename(columns={"TOTMCR21": "TOTMCR"})
+df2021p2 = df2021p2.rename(columns={"TOTMCR21": "TOTMCR"})
+df2022 = df2022.rename(columns={"TOTMCR22": "TOTMCR"})
+df2023 = df2023.rename(columns={"TOTMCR23": "TOTMCR"})
+
+# Renaming Veterans Affair
+df2019 = df2019.rename(columns={"TOTVA19": "TOTVA"})
+df2020 = df2020.rename(columns={"TOTVA20": "TOTVA"})
+df2021p1 = df2021p1.rename(columns={"TOTVA21": "TOTVA"})
+df2021p2 = df2021p2.rename(columns={"TOTVA21": "TOTVA"})
+df2022 = df2022.rename(columns={"TOTVA22": "TOTVA"})
+df2023 = df2023.rename(columns={"TOTVA23": "TOTVA"})
+
+# Renaming Tricare
+df2019 = df2019.rename(columns={"TOTTRI19": "TOTTRI"})
+df2020 = df2020.rename(columns={"TOTTRI20": "TOTTRI"})
+df2021p1 = df2021p1.rename(columns={"TOTTRI21": "TOTTRI"})
+df2021p2 = df2021p2.rename(columns={"TOTTRI21": "TOTTRI"})
+df2022 = df2022.rename(columns={"TOTTRI22": "TOTTRI"})
+df2023 = df2023.rename(columns={"TOTTRI23": "TOTTRI"})
+
+# Renaming Other Federal
+df2019 = df2019.rename(columns={"TOTOFD19": "TOTOFD"})
+df2020 = df2020.rename(columns={"TOTOFD20": "TOTOFD"})
+df2021p1 = df2021p1.rename(columns={"TOTOFD21": "TOTOFD"})
+df2021p2 = df2021p2.rename(columns={"TOTOFD21": "TOTOFD"})
+df2022 = df2022.rename(columns={"TOTOFD22": "TOTOFD"})
+df2023 = df2023.rename(columns={"TOTOFD23": "TOTOFD"})
+
+#Renaming Other State
+df2019 = df2019.rename(columns={"TOTSTL19": "TOTSTL"})
+df2020 = df2020.rename(columns={"TOTSTL20": "TOTSTL"})
+df2021p1 = df2021p1.rename(columns={"TOTSTL21": "TOTSTL"})
+df2021p2 = df2021p2.rename(columns={"TOTSTL21": "TOTSTL"})
+df2022 = df2022.rename(columns={"TOTSTL22": "TOTSTL"})
+df2023 = df2023.rename(columns={"TOTSTL23": "TOTSTL"})
+
 # Renaming Region
 df2019 = df2019.rename(columns={"REGION19": "REGION"})
 df2020 = df2020.rename(columns={"REGION20": "REGION"})
@@ -78,7 +126,7 @@ demog_features = ["FAMINC", "TOTSLF", "AGELAST", "SEX", "REGION"]
 adherance_features = ["DLAYCA42", "AFRDCA42", "DLAYPM42", "AFRDPM42"]
 cancer_features = ["CABLADDR", "CABREAST", "CACERVIX", "CACOLON", "CALUNG", "CALYMPH", "CAMELANO", "CAOTHER", "CAPROSTA", "CASKINNM", "CASKINDK", "CAUTERUS"]
 other_disease_features = ["DIABDX_M18", "HIBPDX", "CHDDX", "ANGIDX", "MIDX", "OHRTDX", "STRKDX", "CHOLDX", "EMPHDX", "ASTHDX", "CHBRON31", "ARTHDX"]
-insurance_features = ["TOTMCD"]
+insurance_features = ["TOTMCD", "TOTMCR", "TOTVA", "TOTTRI", "TOTOFD", "TOTSTL"]
 medicaid = ["TOTMCD"]
 Financial_Subjectivity_features = ["PROBPY42", "PYUNBL42", "CRFMPY42"]
 features = demog_features + cancer_features + other_disease_features + adherance_features + insurance_features + Financial_Subjectivity_features
@@ -134,9 +182,6 @@ clean_df['TOTAL_KNOWN_COST'] = clean_df['PUBLIC_TOTAL'] + clean_df['TOTSLF']
 # 2. Calculate the Coverage Ratio
 clean_df['COVERAGE_RATIO'] = clean_df['MCD_TOTAL'] / (clean_df['TOTAL_KNOWN_COST'] + 1e-9)
 clean_df['COVERAGE_RATIO_PCT'] = clean_df['COVERAGE_RATIO'] * 100
-
-# ----------------------------------------------------------------------------------------------------------------------------------------------
-clean_df['CATASTROPHIC_COST'] = (clean_df['TOTSLF'] > (0.10 * clean_df['FAMINC'])).astype(int)
 # ----------------------------------------------------------------------------------------------------------------------------------------------
 cancer_map = {
     "CABLADDR": "Bladder Cancer",
@@ -232,7 +277,7 @@ print(tier_percentages.round(2).astype(str) + '%')
 # ----------------------------------------------------------------------------------------------------------------------------------------------
 # 5. V(Heatmap)
 # ----------------------------------------------------------------------------------------------------------------------------------------------
-X = clean_df[['FAMINC', 'AGELAST', 'COVERAGE_RATIO_PCT', 'CATASTROPHIC_COST']]
+X = clean_df[["FAMINC", "AGELAST", "COVERAGE_RATIO_PCT"]]
 y = clean_df['TOXICITY_SCORE']
 
 mi_scores = mutual_info_classif(X, y, random_state=42)
