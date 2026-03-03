@@ -51,14 +51,6 @@ df2021p2 = df2021p2.rename(columns={"FAMINC21": "FAMINC"})
 df2022 = df2022.rename(columns={"FAMINC22": "FAMINC"})
 df2023 = df2023.rename(columns={"FAMINC23": "FAMINC"})
 
-# Renaming Medicare
-df2019 = df2019.rename(columns={"TOTMCR19": "TOTMCR"})
-df2020 = df2020.rename(columns={"TOTMCR20": "TOTMCR"})
-df2021p1 = df2021p1.rename(columns={"TOTMCR21": "TOTMCR"})
-df2021p2 = df2021p2.rename(columns={"TOTMCR21": "TOTMCR"})
-df2022 = df2022.rename(columns={"TOTMCR22": "TOTMCR"})
-df2023 = df2023.rename(columns={"TOTMCR23": "TOTMCR"})
-
 # Renaming Medicaid
 df2019 = df2019.rename(columns={"TOTMCD19": "TOTMCD"})
 df2020 = df2020.rename(columns={"TOTMCD20": "TOTMCD"})
@@ -66,38 +58,6 @@ df2021p1 = df2021p1.rename(columns={"TOTMCD21": "TOTMCD"})
 df2021p2 = df2021p2.rename(columns={"TOTMCD21": "TOTMCD"})
 df2022 = df2022.rename(columns={"TOTMCD22": "TOTMCD"})
 df2023 = df2023.rename(columns={"TOTMCD23": "TOTMCD"})
-
-# Renaming Veterans Affair
-df2019 = df2019.rename(columns={"TOTVA19": "TOTVA"})
-df2020 = df2020.rename(columns={"TOTVA20": "TOTVA"})
-df2021p1 = df2021p1.rename(columns={"TOTVA21": "TOTVA"})
-df2021p2 = df2021p2.rename(columns={"TOTVA21": "TOTVA"})
-df2022 = df2022.rename(columns={"TOTVA22": "TOTVA"})
-df2023 = df2023.rename(columns={"TOTVA23": "TOTVA"})
-
-#Renaming Other Federal
-df2019 = df2019.rename(columns={"TOTOFD19": "TOTOFD"})
-df2020 = df2020.rename(columns={"TOTOFD20": "TOTOFD"})
-df2021p1 = df2021p1.rename(columns={"TOTOFD21": "TOTOFD"})
-df2021p2 = df2021p2.rename(columns={"TOTOFD21": "TOTOFD"})
-df2022 = df2022.rename(columns={"TOTOFD22": "TOTOFD"})
-df2023 = df2023.rename(columns={"TOTOFD23": "TOTOFD"})
-
-#Renaming State
-df2019 = df2019.rename(columns={"TOTSTL19": "TOTSTL"})
-df2020 = df2020.rename(columns={"TOTSTL20": "TOTSTL"})
-df2021p1 = df2021p1.rename(columns={"TOTSTL21": "TOTSTL"})
-df2021p2 = df2021p2.rename(columns={"TOTSTL21": "TOTSTL"})
-df2022 = df2022.rename(columns={"TOTSTL22": "TOTSTL"})
-df2023 = df2023.rename(columns={"TOTSTL23": "TOTSTL"})
-
-#Renaming Worker's Comp
-df2019 = df2019.rename(columns={"TOTWCP19": "TOTWCP"})
-df2020 = df2020.rename(columns={"TOTWCP20": "TOTWCP"})
-df2021p1 = df2021p1.rename(columns={"TOTWCP21": "TOTWCP"})
-df2021p2 = df2021p2.rename(columns={"TOTWCP21": "TOTWCP"})
-df2022 = df2022.rename(columns={"TOTWCP22": "TOTWCP"})
-df2023 = df2023.rename(columns={"TOTWCP23": "TOTWCP"})
 
 # Renaming Region
 df2019 = df2019.rename(columns={"REGION19": "REGION"})
@@ -119,8 +79,9 @@ adherance_features = ["DLAYCA42", "AFRDCA42", "DLAYPM42", "AFRDPM42"]
 cancer_features = ["CABLADDR", "CABREAST", "CACERVIX", "CACOLON", "CALUNG", "CALYMPH", "CAMELANO", "CAOTHER", "CAPROSTA", "CASKINNM", "CASKINDK", "CAUTERUS"]
 other_disease_features = ["DIABDX_M18", "HIBPDX", "CHDDX", "ANGIDX", "MIDX", "OHRTDX", "STRKDX", "CHOLDX", "EMPHDX", "ASTHDX", "CHBRON31", "ARTHDX"]
 insurance_features = ["TOTMCD"]
-Financial_Subjectivity_features = ['CFNDBT53', 'CFNBNK53', 'CFNSAC53', 'CFNUNB53']
-features = demog_features + cancer_features + other_disease_features + adherance_features + insurance_features + employment_features
+medicaid = ["TOTMCD"]
+Financial_Subjectivity_features = ["PROBPY42", "PYUNBL42", "CRFMPY42"]
+features = demog_features + cancer_features + other_disease_features + adherance_features + insurance_features + Financial_Subjectivity_features
 # ----------------------------------------------------------------------------------------------------------------------------------------------
 # Filters ONLY for patients who actually received Medicaid funding
 clean_df = main_df[(main_df['CANCERDX'] == 1) & (main_df['TOTMCD'] > 0)].copy()
@@ -133,13 +94,6 @@ clean_df = clean_df[(clean_df[demog_features] >= 0).all(axis=1)]
 
 # Filter negative values for cancer features to prevent logic error
 clean_df[cancer_features] = clean_df[cancer_features].replace([-1,-7, -8, -9], 2)
-
-# Filter negative values for employment features to prevent logic error
-for col in employment_features:
-    if col in clean_df.columns:
-        clean_df[col] = clean_df[col].replace([-1, -7, -8, -9], np.nan)
-# ----------------------------------------------------------------------------------------------------------------------------------------------
-clean_df['PUBLIC_TOTAL'] = clean_df[insurance_features].sum(axis=1)
 # ----------------------------------------------------------------------------------------------------------------------------------------------
 # Standardize the adherence features (1 = Issue, 0 = No Issue, NaN = Missing)
 def clean_adherence(val):
@@ -171,11 +125,14 @@ def calculate_toxicity_tier(row):
 
 clean_df['TOXICITY_TIER'] = clean_df.apply(calculate_toxicity_tier, axis=1)
 # ----------------------------------------------------------------------------------------------------------------------------------------------
-# Total Known Cost (What the patient paid + What public insurance paid)
+clean_df['PUBLIC_TOTAL'] = clean_df[insurance_features].sum(axis=1)
+clean_df['MCD_TOTAL'] = clean_df[medicaid].sum(axis=1)
+
+# Total Known Cost
 clean_df['TOTAL_KNOWN_COST'] = clean_df['PUBLIC_TOTAL'] + clean_df['TOTSLF']
 
 # 2. Calculate the Coverage Ratio
-clean_df['COVERAGE_RATIO'] = clean_df['PUBLIC_TOTAL'] / (clean_df['TOTAL_KNOWN_COST'] + 1e-9)
+clean_df['COVERAGE_RATIO'] = clean_df['MCD_TOTAL'] / (clean_df['TOTAL_KNOWN_COST'] + 1e-9)
 clean_df['COVERAGE_RATIO_PCT'] = clean_df['COVERAGE_RATIO'] * 100
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------
@@ -275,7 +232,7 @@ print(tier_percentages.round(2).astype(str) + '%')
 # ----------------------------------------------------------------------------------------------------------------------------------------------
 # 5. V(Heatmap)
 # ----------------------------------------------------------------------------------------------------------------------------------------------
-X = clean_df[['TOTSLF', 'FAMINC', 'PUBLIC_TOTAL', 'AGELAST', 'COVERAGE_RATIO_PCT', 'CATASTROPHIC_COST']]
+X = clean_df[['FAMINC', 'AGELAST', 'COVERAGE_RATIO_PCT', 'CATASTROPHIC_COST']]
 y = clean_df['TOXICITY_SCORE']
 
 mi_scores = mutual_info_classif(X, y, random_state=42)
