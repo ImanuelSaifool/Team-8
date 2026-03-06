@@ -104,7 +104,7 @@ joint_features = ["JTPAIN31_M18", "ARTHDX", "ARTHTYPE", "ARTHAGED"]
 asthma_features = ["ASTHDX", "ASTHAGED", "ASSTIL31", "ASATAK31", "ASTHEP31"]
 adhd_features = ["ADHDADDX", "ADHDAGED"]
 meantal_health_features = ["MNHLTH31", "MNHLTH42", "MNHLTH53", "UNHAP42", "ADSAD42" "HAVFUN42", "NERVAF42", "ADNERV42", "ADHOPE42", "ADWRTH42", "ADDPRS42", "PHQ242"]
-physical_ability-features = ["ACTLIM31", "AIDHLP31", "WLKLIM31", "LFTDIF31", "STPDIF31", "WLKDIF31", "MILDIF31", "STNDIF31", "BENDIF31", "RCHDIF31", "FNGRDF31"]
+physical_ability_features = ["ACTLIM31", "AIDHLP31", "WLKLIM31", "LFTDIF31", "STPDIF31", "WLKDIF31", "MILDIF31", "STNDIF31", "BENDIF31", "RCHDIF31", "FNGRDF31"]
 
     # 3d. Insurance ---------------------------------------------------------------------------------------------------------------------------
 insurance_coverage_features = ["INSCOV23", "INSURC23"]
@@ -338,7 +338,7 @@ plt.show()
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------
 # 17. ADVANCED MODEL EVALUATION (Clinical ML Standard)
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------------------------------
 
 print("\n" + "="*80)
 print(" ADVANCED MODEL PERFORMANCE ANALYSIS")
