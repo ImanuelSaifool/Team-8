@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 # -------------------------------------------------------------------------
 # PAGE SETUP & FORMAL CLINICAL THEME
 # -------------------------------------------------------------------------
-st.set_page_config(page_title="MEPS Financial Toxicity Tool", layout="wide")
+st.set_page_config(page_title="Medicaid Allocation Risk Model", layout="wide")
 
 st.markdown("""
     <style>
@@ -45,7 +45,7 @@ st.markdown("""
     div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {
         border-radius: 0px !important;
     }
-    /* Override Streamlit's bright red and green boxes to slate gray */
+    /* Override Streamlit's bright boxes to clinical slate gray */
     div[data-testid="stAlert"] {
         background-color: #f8f9fa;
         color: #212529;
@@ -83,13 +83,13 @@ with st.sidebar:
     st.text_input("Attending Physician", value="G. House, MD", disabled=True)
     st.divider()
     st.markdown("**Assessment Objective:**")
-    st.caption("Quantitative evaluation of treatment non-adherence risk driven by financial toxicity, utilizing historical MEPS modeling.")
+    st.caption("Determine statutory Medicaid eligibility and project statistical public burden to mitigate oncology treatment non-adherence.")
 
 # -------------------------------------------------------------------------
 # MAIN DASHBOARD
 # -------------------------------------------------------------------------
-st.title("Oncology Subsidy Allocation & Financial Toxicity Risk Model")
-st.markdown("Department of Biostatistics | Clinical Decision Support System")
+st.title("Proactive Medicaid Allocation & Financial Toxicity Model")
+st.markdown("Department of Biostatistics | Medicaid Decision Support System")
 st.divider()
 
 col1, col2, col3 = st.columns(3, gap="medium")
@@ -139,8 +139,8 @@ with col3:
 # BACKEND & RESULTS
 # -------------------------------------------------------------------------
 st.divider()
-if st.button("Execute Statistical Subsidy Calculation", type="primary", use_container_width=True):
-    with st.spinner("Processing data vector..."):
+if st.button("Evaluate Medicaid Eligibility & Calculate Subsidy", type="primary", use_container_width=True):
+    with st.spinner("Processing data vector against Medicaid thresholds..."):
         
         # Base Logic
         catastrophic_cost = 1 if patient_totslf > (0.10 * patient_faminc) else 0
@@ -220,6 +220,7 @@ if st.button("Execute Statistical Subsidy Calculation", type="primary", use_cont
         new_patient_df = pd.DataFrame(patient_data)[expected_features]
         new_patient_df_selected = new_patient_df.values
         
+        # Medicaid Eligibility Gate Logic
         approx_fpl = 14580 + (5140 * (max(1, patient_famsze) - 1))
         medicaid_income_limit = approx_fpl * 1.38 
         is_medicaid_eligible = True
@@ -234,19 +235,19 @@ if st.button("Execute Statistical Subsidy Calculation", type="primary", use_cont
         res_col1, res_col2 = st.columns([1, 2])
         
         with res_col1:
-            st.markdown("### Decision Output")
+            st.markdown("### Medicaid Assessment")
             if is_medicaid_eligible:
                 recommended_subsidy = final_rf_model.predict(new_patient_df_selected)[0]
                 recommended_subsidy = max(0, recommended_subsidy)
-                st.metric(label="Target Subsidy Allocation", value=f"${recommended_subsidy:,.2f}")
+                st.metric(label="Projected Medicaid Allocation", value=f"${recommended_subsidy:,.2f}")
                 
                 if patient_phq2 > 2 or catastrophic_cost == 1:
-                    st.info("Clinical Note: Patient flags positive for depressive symptoms or catastrophic out-of-pocket costs. Preemptive intervention recommended to maintain treatment adherence.")
+                    st.info("Clinical Note: Eligible for Medicaid. Patient flags positive for depressive symptoms or catastrophic out-of-pocket costs. Preemptive adherence intervention required.")
                 else:
-                    st.info("Clinical Note: Standard allocation path. No acute SDoH interventions flagged.")
+                    st.info("Clinical Note: Eligible for Medicaid. Standard allocation path. No acute SDoH interventions flagged.")
             else:
-                st.metric(label="Target Subsidy Allocation", value="$0.00")
-                st.warning("Flag: Patient income exceeds statutory eligibility thresholds for Medicaid/CHIP allocation.")
+                st.metric(label="Projected Medicaid Allocation", value="$0.00")
+                st.warning("Coverage Flag: Patient income exceeds statutory Federal Poverty Level (FPL) eligibility thresholds for Medicaid/CHIP allocation.")
 
         with res_col2:
             st.markdown("### Cost Driver Analysis (SHAP)")
