@@ -20,7 +20,7 @@ Financial toxicity is a documented side effect of cancer treatment that directly
 
 ## Repository Structure
 - `App.py`: The main Streamlit web application.
-- `Clinical_Diagnostic_Tool.py`: The full code
+- `Clinical Insurance Aid Tool.py`: The full code
 - `meps_model_data.pkl`: The fully trained machine learning "brain" (exported from the training phase).
 - `requirements.txt`: Environment dependencies.
 - `.streamlit/config.toml`: Custom clinical theme and color palette settings.
