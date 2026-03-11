@@ -1,35 +1,15 @@
-Here is a comprehensive README.md template tailored to your project. You can copy this directly into your GitHub repository and adjust the specific details (like file names and exact MEPS variables) as you finalize your code.
-
-MEPS Oncology Analysis: Financial Toxicity, Depression, and Non-Adherence
-Overview
+**Overview**
 This repository contains the Python-based data science methodology and codebase for analyzing the cascading effects of financial toxicity in oncology. Using data from the Medical Expenditure Panel Survey (MEPS), this project models the statistical relationships between the financial burden of cancer care, the onset or exacerbation of depression, and subsequent treatment non-adherence.
 
 The primary objective is to use biostatistical modeling to quantify how economic side effects impact mental health and patient compliance, identifying critical intervention points in patient care.
 
-Table of Contents
-Background & Motivation
-
-Dataset
-
-Project Structure
-
-Methodology
-
-Installation & Setup
-
-Usage
-
-Future Work
-
-Author
-
-Background & Motivation
+**Background & Motivation**
 Cancer treatment often introduces severe economic burdens to patients, commonly referred to as "financial toxicity." This project explores the hypothesis that this financial strain acts as a catalyst for mental health decline (specifically depression), which in turn significantly increases the likelihood of a patient abandoning or missing their prescribed treatments. Understanding these links through robust data analysis is crucial for developing better holistic support systems for oncology patients.
 
-Dataset
+**Dataset**
 This analysis utilizes the Medical Expenditure Panel Survey (MEPS) dataset, a set of large-scale surveys of families and individuals, their medical providers, and employers across the United States.
 
-Key Variables Analyzed:
+**Key Variables Analyzed:**
 
 Financial Burden: Out-of-pocket healthcare expenditures, income ratios, and insurance status.
 
